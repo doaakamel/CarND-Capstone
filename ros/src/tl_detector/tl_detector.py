@@ -5,7 +5,7 @@ from geometry_msgs.msg import PoseStamped, Pose
 from styx_msgs.msg import TrafficLightArray, TrafficLight
 from styx_msgs.msg import Lane
 from sensor_msgs.msg import Image
-from cv_bridge import CvBridge
+from cv_bridge import CvBridge, CvBridgeError
 from light_classification.tl_classifier import TLClassifier
 import tf
 import cv2
@@ -16,12 +16,14 @@ STATE_COUNT_THRESHOLD = 3
 
 class TLDetector(object):
     def __init__(self):
-        rospy.init_node('tl_detector')
+        rospy.init_node('tl_detector', log_level=rospy.DEBUG)
 
         self.pose = None
         self.waypoints = None
         self.camera_image = None
         self.lights = []
+        self.waypoints_2d = None
+        self.waypoints_tree = None
 
         sub1 = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         sub2 = rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
@@ -40,6 +42,7 @@ class TLDetector(object):
         self.config = yaml.load(config_string)
 
         self.upcoming_red_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
+        self.tl_detected_image_pub = rospy.Publisher("detected_tl_image", Image, queue_size=1)
 
         self.bridge = CvBridge()
         self.light_classifier = TLClassifier()
@@ -49,8 +52,6 @@ class TLDetector(object):
         self.last_state = TrafficLight.UNKNOWN
         self.last_wp = -1
         self.state_count = 0
-        self.waypoints_2d = None
-        self.waypoints_tree = None
 
         rospy.spin()
 
@@ -125,10 +126,16 @@ class TLDetector(object):
             #self.prev_light_loc = None
             #return False
 
-        #cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
+        cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
 
         #Get classification
         #return self.light_classifier.get_classification(cv_image)
+        tl_cv_image = self.light_classifier.get_classification(cv_image)
+        try:
+            self.tl_detected_image_pub.publish(self.bridge.cv2_to_imgmsg(tl_cv_image, "bgr8"))
+        except CvBridgeError as e:
+           print(e)
+
         #FixMe: implement the classifier and return the classified state instead
         return light.state
 
