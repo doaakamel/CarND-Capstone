@@ -76,11 +76,11 @@ roslaunch launch/site.launch
 
 ### Implementation details
 
-## Traffic lights detection
+#### Traffic lights detection
 
 For detecting traffic lights from a camera feed a pre-trained on on the [COCO dataset](http://mscoco.org/) model [ssdlite_mobilenet_v2_coco](http://download.tensorflow.org/models/object_detection/ssdlite_mobilenet_v2_coco_2018_05_09.tar.gz) has been taken from the [Tensorflow detection model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md). The model was selected based on the processing speed as being the fastest among the latest listed. Although the frozen inference graphs were generated using the [v1.8.0](https://github.com/tensorflow/tensorflow/tree/v1.8.0) release version of Tensorflow and the project required version [v1.3.0](https://github.com/tensorflow/tensorflow/tree/v1.8.0), the model appeared to be compatible with that version.
 
-## Traffic light color identification
+#### Traffic light color identification
 
 Once the model finds the traffic lights and provides you the boundary boxes, the next step is to crop the traffic light images from the scene based on those boxes and identify the color. The approach is entirely based on image processing:
 1. Convert the image into LAB color space and isolate the L channel. Good support material can be found [here](https://www.learnopencv.com/color-spaces-in-opencv-cpp-python/).
