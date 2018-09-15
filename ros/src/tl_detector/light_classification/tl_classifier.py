@@ -58,28 +58,38 @@ class TLClassifier(object):
         classes = np.squeeze(classes).astype(np.int32)
         scores = np.squeeze(scores)
         #tl_cropped = None
+        best_scores = []
+        detected = False
         for idx, classID in enumerate(classes):
             if classID == 10: #10 is traffic light
                 if scores[idx] > 0.10: #confidence level
+                    best_scores.append([scores[idx], idx])
+                    detected = True
 
-                    nbox = boxes[idx]
+        if detected:
+            best_scores.sort(key=lambda tup: tup[0], reverse=True)
 
-                    height = image.shape[0]
-                    width = image.shape[1]
+            #nbox = boxes[idx]
+            best_score = best_scores[0]
+            rospy.logdebug("number of TL found %d, best score: %f", len(best_scores), best_score[0])
+            nbox = boxes[best_score[1]]
 
-                    box = np.array([nbox[0]*height, nbox[1]*width, nbox[2]*height, nbox[3]*width]).astype(int)
-                    box_height = box[2] - box[0]
-                    box_width = box[3] - box[1]
-                    ratio = float(box_height)/float(box_width)
-                    rospy.logdebug("ratio: %f", ratio)
-                    if ratio > 2.4 and ratio < 3.0:
-                        tl_cropped = image[box[0]:box[2], box[1]:box[3]]
-                        tl_color = self.get_color(tl_cropped)
-                        #augment image with detected TLs
-                        cv2.rectangle(image, (box[1], box[0]), (box[3], box[2]), (0, 255, 0), 2)
-                        font = cv2.FONT_HERSHEY_SIMPLEX
-                        font_color = (255, 255, 255)
-                        cv2.putText(image, tl_color, (box[1], box[0]), font, 2.0, font_color, lineType=cv2.LINE_AA)
+            height = image.shape[0]
+            width = image.shape[1]
+
+            box = np.array([nbox[0]*height, nbox[1]*width, nbox[2]*height, nbox[3]*width]).astype(int)
+            box_height = box[2] - box[0]
+            box_width = box[3] - box[1]
+            ratio = float(box_height)/float(box_width)
+            rospy.logdebug("ratio: %f", ratio)
+            if ratio >= 2.0 and ratio < 3.0: #started from 2.4
+                tl_cropped = image[box[0]:box[2], box[1]:box[3]]
+                tl_color = self.get_color(tl_cropped)
+                #augment image with detected TLs
+                cv2.rectangle(image, (box[1], box[0]), (box[3], box[2]), (0, 255, 0), 2)
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                font_color = (255, 255, 255)
+                cv2.putText(image, tl_color, (box[1], box[0]), font, 2.0, font_color, lineType=cv2.LINE_AA)
         return image
 
     def get_color(self, image_rgb):
@@ -110,7 +120,7 @@ class TLClassifier(object):
         col = 6
         blured_img = image.copy()
         blured_img = blured_img[row:-row, col:-col, :]
-        blured_img = cv2.GaussianBlur(blured_img, (3, 3), 0)
+        #blured_img = cv2.GaussianBlur(blured_img, (3, 3), 0)
         return blured_img
 
     def standardize_input(self, image):
