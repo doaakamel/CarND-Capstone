@@ -122,22 +122,21 @@ class TLDetector(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
-        #if(not self.has_image):
-            #self.prev_light_loc = None
-            #return False
+        if(not self.has_image):
+            self.prev_light_loc = None
+            return False
 
         cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
 
         #Get classification
-        #return self.light_classifier.get_classification(cv_image)
-        tl_cv_image = self.light_classifier.get_classification(cv_image)
+        tl_image_rgb, color_index = self.light_classifier.get_classification(cv_image)
+        tl_cv_image = cv2.cvtColor(tl_image_rgb, cv2.COLOR_RGB2BGR)
         try:
             self.tl_detected_image_pub.publish(self.bridge.cv2_to_imgmsg(tl_cv_image, "bgr8"))
         except CvBridgeError as e:
            print(e)
 
-        #FixMe: implement the classifier and return the classified state instead
-        return light.state
+        return color_index #light.state
 
     def process_traffic_lights(self):
         """Finds closest visible traffic light, if one exists, and determines its

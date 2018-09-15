@@ -66,6 +66,7 @@ class TLClassifier(object):
                     best_scores.append([scores[idx], idx])
                     detected = True
 
+        tl_index = TrafficLight.UNKNOWN
         if detected:
             best_scores.sort(key=lambda tup: tup[0], reverse=True)
 
@@ -84,13 +85,13 @@ class TLClassifier(object):
             rospy.logdebug("ratio: %f", ratio)
             if ratio >= 2.0 and ratio < 3.0: #started from 2.4
                 tl_cropped = image[box[0]:box[2], box[1]:box[3]]
-                tl_color = self.get_color(tl_cropped)
+                tl_color, tl_index = self.get_color(tl_cropped)
                 #augment image with detected TLs
                 cv2.rectangle(image, (box[1], box[0]), (box[3], box[2]), (0, 255, 0), 2)
                 font = cv2.FONT_HERSHEY_SIMPLEX
                 font_color = (255, 255, 255)
                 cv2.putText(image, tl_color, (box[1], box[0]), font, 2.0, font_color, lineType=cv2.LINE_AA)
-        return image
+        return image, tl_index
 
     def get_color(self, image_rgb):
         image_lab = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2LAB)
@@ -113,20 +114,19 @@ class TLClassifier(object):
         max_value = max(px_sums)
         max_index = px_sums.index(max_value)
 
-        return color[max_index]
+        return color[max_index], max_index
 
-    def crop_n_blur(self, image):
+    def crop(self, image):
         row = 2
         col = 6
-        blured_img = image.copy()
-        blured_img = blured_img[row:-row, col:-col, :]
-        #blured_img = cv2.GaussianBlur(blured_img, (3, 3), 0)
-        return blured_img
+        cropped_img = image.copy()
+        cropped_img = cropped_img[row:-row, col:-col, :]
+        return cropped_img
 
     def standardize_input(self, image):
         standard_img = np.copy(image)
         standard_img = cv2.resize(standard_img, (32, 32))
-        standard_img = self.crop_n_blur(standard_img)
+        standard_img = self.crop(standard_img)
         return standard_img
 
     def slice_image(self, image):
