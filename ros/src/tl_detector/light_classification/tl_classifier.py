@@ -2,6 +2,7 @@ from styx_msgs.msg import TrafficLight
 import tensorflow as tf
 import numpy as np
 import cv2
+import rospy
 
 class TLClassifier(object):
     def __init__(self):
@@ -45,6 +46,7 @@ class TLClassifier(object):
         """
         #TODO implement light color prediction
         #return TrafficLight.UNKNOWN
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image_np = np.asarray(image, dtype="uint8")
         image_np_expanded = np.expand_dims(image_np, axis=0)
 
@@ -58,7 +60,7 @@ class TLClassifier(object):
         #tl_cropped = None
         for idx, classID in enumerate(classes):
             if classID == 10: #10 is traffic light
-                if scores[idx] > 0.50: #confidence level
+                if scores[idx] > 0.10: #confidence level
 
                     nbox = boxes[idx]
 
@@ -66,13 +68,18 @@ class TLClassifier(object):
                     width = image.shape[1]
 
                     box = np.array([nbox[0]*height, nbox[1]*width, nbox[2]*height, nbox[3]*width]).astype(int)
-                    tl_cropped = image[box[0]:box[2], box[1]:box[3]]
-                    tl_color = self.get_color(tl_cropped)
-                    #augment image with detected TLs
-                    cv2.rectangle(image, (box[1], box[0]), (box[3], box[2]), (0, 255, 0), 2)
-                    font = cv2.FONT_HERSHEY_SIMPLEX
-                    font_color = (0, 0, 0)
-                    cv2.putText(image, tl_color, (box[1], box[0]), font, 1.0, font_color, lineType=cv2.LINE_AA)
+                    box_height = box[2] - box[0]
+                    box_width = box[3] - box[1]
+                    ratio = float(box_height)/float(box_width)
+                    rospy.logdebug("ratio: %f", ratio)
+                    if ratio > 2.4 and ratio < 3.0:
+                        tl_cropped = image[box[0]:box[2], box[1]:box[3]]
+                        tl_color = self.get_color(tl_cropped)
+                        #augment image with detected TLs
+                        cv2.rectangle(image, (box[1], box[0]), (box[3], box[2]), (0, 255, 0), 2)
+                        font = cv2.FONT_HERSHEY_SIMPLEX
+                        font_color = (255, 255, 255)
+                        cv2.putText(image, tl_color, (box[1], box[0]), font, 2.0, font_color, lineType=cv2.LINE_AA)
         return image
 
     def get_color(self, image_rgb):
