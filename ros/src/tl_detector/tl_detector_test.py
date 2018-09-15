@@ -58,8 +58,8 @@ class TLDetector(object):
         cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
 
         #Get classification
-        #return self.light_classifier.get_classification(cv_image)
-        tl_cv_image = self.light_classifier.get_classification(cv_image)
+        tl_image_rgb, color_index = self.light_classifier.get_classification(cv_image)
+        tl_cv_image = cv2.cvtColor(tl_image_rgb, cv2.COLOR_RGB2BGR)
         try:
             self.tl_detected_image_pub.publish(self.bridge.cv2_to_imgmsg(tl_cv_image, "bgr8"))
         except CvBridgeError as e:
