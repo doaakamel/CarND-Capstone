@@ -171,9 +171,11 @@ class TLDetector(object):
             if closest_light:
                 state = self.get_light_state(closest_light)
                 return line_wp_idx, state
-            self.waypoints = None
+        else: #just process the image
+            state = self.get_light_state(closest_light)
 
-        return -1, TrafficLight.UNKNOWN
+        self.waypoints = None
+        return -1, state
 
 if __name__ == '__main__':
     try:
