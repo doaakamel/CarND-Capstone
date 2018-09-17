@@ -16,6 +16,7 @@ class TLClassifier(object):
         self.width = 0
         self.height = 0
         self.channels = 3
+        self.gamma = 1.0
 
         # Load a frozen model into memory
         self.detection_graph = tf.Graph()
@@ -46,6 +47,15 @@ class TLClassifier(object):
         """
         #TODO implement light color prediction
         #return TrafficLight.UNKNOWN
+        #image = self.enhance_image(image)
+        #image = cv2.GaussianBlur(image, (3, 3), 0)
+        if self.gamma == 1.0:
+            self.gamma = 0.6
+        elif self.gamma == 0.6:
+            self.gamma = 1.4
+        elif self.gamma == 1.4:
+            self.gamma = 1.0
+        image = self.adjust_gamma(image, self.gamma)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image_np = np.asarray(image, dtype="uint8")
         image_np_expanded = np.expand_dims(image_np, axis=0)
@@ -137,3 +147,22 @@ class TLClassifier(object):
         middle = img[slice_height:2 * slice_height, :, :]
         lower = img[2 * slice_height:3 * slice_height, :, :]
         return upper, middle, lower
+
+    def enhance_image(self, image_bgr, gridsize=2): # Contrast Limited Adaptive Histogram Equalization
+        image_lab = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2LAB)
+        lab_planes = cv2.split(image_lab)
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(gridsize, gridsize))
+        lab_planes[0] = clahe.apply(lab_planes[0])
+        image_lab = cv2.merge(lab_planes)
+        image_bgr = cv2.cvtColor(image_lab, cv2.COLOR_LAB2BGR)
+        image_bgr = cv2.GaussianBlur(image_bgr, (3, 3), 0)
+        return image_bgr
+
+    def adjust_gamma(self, bgr, gamma=1.0):
+        # build a lookup table mapping the pixel values [0, 255] to
+        # their adjusted gamma values
+        invGamma = 1.0 / gamma
+        table = np.array([((i / 255.0) ** invGamma) * 255
+                          for i in np.arange(0, 256)]).astype("uint8")
+        # apply gamma correction using the lookup table
+        return cv2.LUT(bgr, table)
