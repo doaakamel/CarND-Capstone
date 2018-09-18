@@ -1,6 +1,14 @@
+## Final Project - System Integration
+
 This is the project repo for the final project of the Udacity Self-Driving Car Nanodegree: Programming a Real Self-Driving Car. For more information about the project, see the project introduction [here](https://classroom.udacity.com/nanodegrees/nd013/parts/6047fe34-d93c-4f50-8336-b70ef10cb4b2/modules/e1a23b06-329a-4684-a717-ad476f0d8dff/lessons/462c933d-9f24-42d3-8bdc-a08a5fc866e4/concepts/5ab4b122-83e6-436d-850f-9f4d26627fd9).
 
-<img src="imgs/simulator.gif" width="480" alt="Simulator run" />
+<img src="imgs/simulator.gif" width="640" alt="Simulator run" />
+
+### The team
+
+It is a solo submission by: 
+
+- [Viatcheslav Tretyakov](https://github.com/vtretyakov) (viatcheslav.tretyakov@gmail.com)
 
 ### Implementation details
 
@@ -8,7 +16,7 @@ This is the project repo for the final project of the Udacity Self-Driving Car N
 
 The following is a system architecture diagram showing the ROS nodes and topics used in the project.
 
-<img src="imgs/final-project-ros-graph-v2.png" width="640" alt="Software architecture" />
+<img src="imgs/final-project-ros-graph-v2.png" width="860" alt="Software architecture" />
 
 #### Traffic lights detection
 
