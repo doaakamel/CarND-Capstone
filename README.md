@@ -1,6 +1,42 @@
 This is the project repo for the final project of the Udacity Self-Driving Car Nanodegree: Programming a Real Self-Driving Car. For more information about the project, see the project introduction [here](https://classroom.udacity.com/nanodegrees/nd013/parts/6047fe34-d93c-4f50-8336-b70ef10cb4b2/modules/e1a23b06-329a-4684-a717-ad476f0d8dff/lessons/462c933d-9f24-42d3-8bdc-a08a5fc866e4/concepts/5ab4b122-83e6-436d-850f-9f4d26627fd9).
 
-Please use **one** of the two installation options, either native **or** docker installation.
+<img src="imgs/simulator.gif" width="480" alt="Simulator run" />
+
+### Implementation details
+
+#### Software architecture
+
+The following is a system architecture diagram showing the ROS nodes and topics used in the project.
+
+<img src="imgs/final-project-graph-v2.png" width="480" alt="Software architecture" />
+
+#### Traffic lights detection
+
+For detecting traffic lights from a camera feed a pre-trained on the [COCO dataset](http://mscoco.org/) model [ssdlite_mobilenet_v2_coco](http://download.tensorflow.org/models/object_detection/ssdlite_mobilenet_v2_coco_2018_05_09.tar.gz) has been taken from the [Tensorflow detection model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md). The model was selected based on the processing speed as being the fastest among the latest listed. Although the frozen inference graphs were generated using the [v1.8.0](https://github.com/tensorflow/tensorflow/tree/v1.8.0) release version of Tensorflow and the project required version [v1.3.0](https://github.com/tensorflow/tensorflow/tree/v1.8.0), the model appeared to be compatible with that version.
+
+<img src="imgs/classified_box.jpg" width="480" alt="Detected traffic light" />
+
+#### Traffic light color identification
+
+Once the model finds the traffic lights and provides you the boundary boxes, the next step is to crop the traffic light images from the scene based on those boxes and identify the color. The approach is entirely based on image processing:
+1. Convert the image into LAB color space and isolate the L channel. Good support material can be found [here](https://www.learnopencv.com/color-spaces-in-opencv-cpp-python/).
+
+<img src="imgs/LAB_l_crop.png" width="100" alt="LAB color space channel `l`" />
+
+2. Split the traffic light cropped image onto three equal segments - upper, middle, and lower corresponding to read, yellow, and green lights respectively. 
+
+<img src="imgs/red_slice.png" width="100" alt="Upper segment" />
+<img src="imgs/yellow_slice.png" width="100" alt="Middle segment" />
+<img src="imgs/green_slice.png" width="100" alt="Lower segment" />
+
+3. To identify the color, we need to find out which segment is brighter. Thanks to the LAB color space, L channel gives us exactly that information. All we need to do is to find the sum of all pixels in each of the three segments. The highest score gives us the traffic light color. 
+
+`The light is GREEN`
+
+In the real scenario several filtering methods are applied to give a more reliable estimate. 
+1. Among all the lights detected in a frame, the one with the highest confidence score is selected.
+2. The respected lights' boundary box is verified based on the aspect ratio. If it doesn't fit into our threshold, that means the image will not be correctly cropped and the color may be wrongly identified.
+3. Gamma correction was used to enhance too bright images at every second frame.
 
 ### Native Installation
 
@@ -74,19 +110,4 @@ roslaunch launch/site.launch
 5. Confirm that traffic light detection works on real life images
 
 
-### Implementation details
 
-#### Traffic lights detection
-
-For detecting traffic lights from a camera feed a pre-trained on on the [COCO dataset](http://mscoco.org/) model [ssdlite_mobilenet_v2_coco](http://download.tensorflow.org/models/object_detection/ssdlite_mobilenet_v2_coco_2018_05_09.tar.gz) has been taken from the [Tensorflow detection model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md). The model was selected based on the processing speed as being the fastest among the latest listed. Although the frozen inference graphs were generated using the [v1.8.0](https://github.com/tensorflow/tensorflow/tree/v1.8.0) release version of Tensorflow and the project required version [v1.3.0](https://github.com/tensorflow/tensorflow/tree/v1.8.0), the model appeared to be compatible with that version.
-
-#### Traffic light color identification
-
-Once the model finds the traffic lights and provides you the boundary boxes, the next step is to crop the traffic light images from the scene based on those boxes and identify the color. The approach is entirely based on image processing:
-1. Convert the image into LAB color space and isolate the L channel. Good support material can be found [here](https://www.learnopencv.com/color-spaces-in-opencv-cpp-python/).
-2. Split the traffic light cropped image onto three equal segments - upper, middle, and lower corresponding to read, yellow, and green lights respectively. 
-3. To identify the color, we need to find out which segment is brighter. Thanks to the LAB color space, L channel gives us exactly that information. All we need to do is to find the sum of all pixels in each of the three segments. The highest score gives us the traffic light color. 
-
-In the real scenario several filtering methods are applied to give a more reliable estimate. 
-1. Among all the lights detected in a frame, the one with the highest confidence score is selected.
-2. The respected lights' boundary box is verified based on the aspect ratio. If it doesn't fit into our threshold, that means the image will not be correctly cropped and the color may be wrongly identified.
