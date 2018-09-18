@@ -46,6 +46,12 @@ In the real scenario several filtering methods are applied to give a more reliab
 2. The respected lights' boundary box is verified based on the aspect ratio. If it doesn't fit into our threshold, that means the image will not be correctly cropped and the color may be wrongly identified.
 3. Gamma correction was used to enhance too bright images at every second frame.
 
+<img src="imgs/traffic_light_training.gif" width="480" alt="traffic_light_training.bag" />
+
+<img src="imgs/loop_with_traffic_light.gif" width="480" alt="loop_with_traffic_light.bag" />
+
+<img src="imgs/just_traffic_light.gif" width="480" alt="just_traffic_light.bag" />
+
 ### Native Installation
 
 * Be sure that your workstation is running Ubuntu 16.04 Xenial Xerus or Ubuntu 14.04 Trusty Tahir. [Ubuntu downloads can be found here](https://www.ubuntu.com/download/desktop).
