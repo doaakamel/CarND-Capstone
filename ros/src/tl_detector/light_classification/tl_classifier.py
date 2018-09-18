@@ -16,7 +16,8 @@ class TLClassifier(object):
         self.width = 0
         self.height = 0
         self.channels = 3
-        self.gamma = 1.0
+        self.gamma = 0.6
+        self.image_count = 0
 
         # Load a frozen model into memory
         self.detection_graph = tf.Graph()
@@ -45,20 +46,16 @@ class TLClassifier(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
-        #TODO implement light color prediction
-        #return TrafficLight.UNKNOWN
-        #image = self.enhance_image(image)
-        #image = cv2.GaussianBlur(image, (3, 3), 0)
         if self.gamma == 1.0:
             self.gamma = 0.6
         elif self.gamma == 0.6:
-            self.gamma = 1.4
-        elif self.gamma == 1.4:
             self.gamma = 1.0
         image = self.adjust_gamma(image, self.gamma)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image_np = np.asarray(image, dtype="uint8")
         image_np_expanded = np.expand_dims(image_np, axis=0)
+
+        detected = False
 
         with self.detection_graph.as_default():
             (boxes, scores, classes, num) = self.sess.run(
@@ -67,9 +64,8 @@ class TLClassifier(object):
         boxes = np.squeeze(boxes)
         classes = np.squeeze(classes).astype(np.int32)
         scores = np.squeeze(scores)
-        #tl_cropped = None
         best_scores = []
-        detected = False
+
         for idx, classID in enumerate(classes):
             if classID == 10: #10 is traffic light
                 if scores[idx] > 0.10: #confidence level
