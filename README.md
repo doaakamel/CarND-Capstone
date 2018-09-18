@@ -8,7 +8,7 @@ This is the project repo for the final project of the Udacity Self-Driving Car N
 
 The following is a system architecture diagram showing the ROS nodes and topics used in the project.
 
-<img src="imgs/final-project-graph-v2.png" width="480" alt="Software architecture" />
+<img src="imgs/final-project-ros-graph-v2.png" width="640" alt="Software architecture" />
 
 #### Traffic lights detection
 
