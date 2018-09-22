@@ -6,11 +6,12 @@ import rospy
 
 class TLClassifier(object):
     def __init__(self):
-        #TODO load classifier
-        MODEL_NAME = 'ssdlite_mobilenet_v2_coco_2018_05_09'
+        # load classifier
+        #self.MODEL_NAME = 'ssdlite_mobilenet_v2_coco_2018_05_09'
+        self.MODEL_NAME = 'frozen_real_mobile'
 
         # Path to frozen detection graph.
-        PATH_TO_CKPT = MODEL_NAME + '/frozen_inference_graph.pb'
+        PATH_TO_CKPT = self.MODEL_NAME + '/frozen_inference_graph.pb'
 
         self.model = None
         self.width = 0
@@ -18,6 +19,7 @@ class TLClassifier(object):
         self.channels = 3
         self.gamma = 0.6
         self.image_count = 0
+        self.correct_gamma = True
 
         # Load a frozen model into memory
         self.detection_graph = tf.Graph()
@@ -46,10 +48,11 @@ class TLClassifier(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
-        if self.gamma == 1.0:
-            self.gamma = 0.6
-        elif self.gamma == 0.6:
-            self.gamma = 1.0
+        if self.correct_gamma:
+            if self.gamma == 1.0:
+                self.gamma = 0.6
+            elif self.gamma == 0.6:
+                self.gamma = 1.0
         image = self.adjust_gamma(image, self.gamma)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image_np = np.asarray(image, dtype="uint8")
@@ -67,18 +70,22 @@ class TLClassifier(object):
         best_scores = []
 
         for idx, classID in enumerate(classes):
-            if classID == 10: #10 is traffic light
-                if scores[idx] > 0.10: #confidence level
-                    best_scores.append([scores[idx], idx])
+            if self.MODEL_NAME == 'ssdlite_mobilenet_v2_coco_2018_05_09':
+                if classID == 10: # 10 is traffic light
+                    if scores[idx] > 0.10: #confidence level
+                        best_scores.append([scores[idx], idx, classID])
+                        detected = True
+            else: # we tuned the model to classify only traffic lights
+                if scores[idx] > 0.10:  # confidence level
+                    best_scores.append([scores[idx], idx, classID])
                     detected = True
 
         tl_index = TrafficLight.UNKNOWN
         if detected:
             best_scores.sort(key=lambda tup: tup[0], reverse=True)
 
-            #nbox = boxes[idx]
             best_score = best_scores[0]
-            rospy.logdebug("number of TL found %d, best score: %f", len(best_scores), best_score[0])
+            rospy.logdebug("number of TL found %d, best score: %f, color: %f", len(best_scores), best_score[0], best_score[2])
             nbox = boxes[best_score[1]]
 
             height = image.shape[0]
@@ -92,6 +99,9 @@ class TLClassifier(object):
             if ratio >= 2.0 and ratio < 3.0: #started from 2.4
                 tl_cropped = image[box[0]:box[2], box[1]:box[3]]
                 tl_color, tl_index = self.get_color(tl_cropped)
+                #color = ['RED', 'YELLOW', 'GREEN', 'UNKNOWN']
+                #tl_index = best_score[2]
+                #tl_color = color[tl_index]
                 #augment image with detected TLs
                 cv2.rectangle(image, (box[1], box[0]), (box[3], box[2]), (0, 255, 0), 2)
                 font = cv2.FONT_HERSHEY_SIMPLEX
@@ -112,7 +122,7 @@ class TLClassifier(object):
 
         y, x, c = red_slice.shape
         px_sums = []
-        color = ['RED', 'YELLOW', 'GREEN']
+        color = ['RED', 'YELLOW', 'GREEN', 'UNKNOWN']
         px_sums.append(np.sum(red_slice[0:y, 0:x, 0]))
         px_sums.append(np.sum(yellow_slice[0:y, 0:x, 0]))
         px_sums.append(np.sum(green_slice[0:y, 0:x, 0]))
