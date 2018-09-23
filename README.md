@@ -52,6 +52,42 @@ In the real scenario several filtering methods are applied to give a more reliab
 
 <img src="imgs/just_traffic_light.gif" width="480" alt="just_traffic_light.bag" />
 
+#### Traffic lights detection v.2.0
+
+Although the results with the [ssdlite_mobilenet_v2_coco](http://download.tensorflow.org/models/object_detection/ssdlite_mobilenet_v2_coco_2018_05_09.tar.gz) model were quite satisfactory, it didn't perform good enough on the `traffic_light_training.bag` bagfile. To improve the performance, another model was used ([ssd_mobilenet_v1_coco_2017_11_17](https://github.com/vtretyakov/CarND-Capstone/tree/master/ros/src/tl_detector/ssd_mobilenet_v1_coco_2017_11_17)) that was retrained on a dataset [kindly shared](https://drive.google.com/file/d/0B-Eiyn-CUQtxdUZWMkFfQzdObUE/view?usp=sharing) by one of the Nanodegree's alumni. It was a great help finding a project of another student with a GitHub nickname [coldKnight](https://github.com/coldKnight/TrafficLight_Detection-TensorFlowAPI) explaining how to re-train the models. But due to the project's requirement to use TensorFlow 1.3 the steps described could not be directly followed since the research models and the tools required to train the models for TensorFlow 1.3 are kindly removed from the [earlier releases](https://github.com/tensorflow/models/releases). The version supported on the date of this writing was 1.8.0.
+
+There are two ways one could still get the older version of the `tensorflow/models` repo:
+
+1. On [archive.org](https://archive.org/):
+
+```sh
+$ wget https://archive.org/download/github.com-tensorflow-models_-_2017-10-05_18-42-08/tensorflow-models_-_2017-10-05_18-42-08.bundle
+$ git clone tensorflow-models_-_2017-10-05_18-42-08.bundle -b master
+$ mv -r tensorflow-models_-_2017-10-05_18-42-08 ~/tensorflow/models
+```
+2. By knowing the commit's hash:
+
+```sh
+$ cd ~/tensorflow/
+$ git clone https://github.com/tensorflow/models.git
+$ cd models
+$ git checkout edcf29f
+```
+After that you need to follow a simple installation process [described here](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/installation.md). In case od doubt you can always find the instruction inside your folder: `research/object_detection/g3doc/installation.md`.
+
+The last step described there is to test the installation. If it fales, please perform two more simple steps:
+
+```sh
+$ python setup.py build
+$ python setup.py install
+```
+
+At this point the test script should pass.
+
+The result after re-training the model:
+
+<img src="imgs/traffic_light_training_v2.gif" width="480" alt="traffic_light_training.bag" />
+
 ### Native Installation
 
 * Be sure that your workstation is running Ubuntu 16.04 Xenial Xerus or Ubuntu 14.04 Trusty Tahir. [Ubuntu downloads can be found here](https://www.ubuntu.com/download/desktop).
